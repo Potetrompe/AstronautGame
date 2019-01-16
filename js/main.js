@@ -254,8 +254,8 @@ bodyEl.addEventListener("mousemove", moveBoxEl);
 
 function moveBoxEl(e){
     //console.log(e.clientX + " - " + e.clientY);
-    var x = e.clientX + "px";
-    var y = e.clientY + "px";
+    var x = e.clientX + 50 + "px"; // 50px bs. wanted to center div under cursor
+    var y = e.clientY + 50 + "px"; // 50px bc. otherwise user cannot click restart button, div was in the way
     boxEl.style.top = y;
     boxEl.style.left = x;
     boxEl.innerHTML = y + " - " + x;
