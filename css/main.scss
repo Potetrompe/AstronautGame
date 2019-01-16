@@ -1,0 +1,63 @@
+
+//-----Fonts-----//
+    @import url(https://fonts.googleapis.com/css?family=Oswald|Montserrat:400,400i,700,700i&effect=anaglyph|fire-animation);
+    // class="font-effect-fire-animation" OR class="font-effect-anaglyph"
+    $mainFont: 'Montserrat';
+    $altFont: 'Oswald';
+
+//-----Colors-----//
+    $mainTxtCol: rgb(228, 220, 220);
+    $mainBGCol: rgb(75, 87, 116);
+
+//-----Style-----//
+    body{
+        background-color: $mainBGCol;
+        color: $mainTxtCol;
+        font-size: 1em;
+        font-family: $altFont;
+
+        display: flex;
+        flex-direction: column;
+        //justify-content: center;
+        align-items: center;
+
+        h1{
+            font-size: 70px;
+            margin: 0;
+        }
+
+        #canvasGfx{
+            /*position: fixed;
+            top: 100;
+            left: 0;*/
+            border: 1px solid #fff;
+            
+        }
+
+        #btnRestart{
+            //border-radius: 28px;
+            text-shadow: 3px 2px 1px #000;
+            font-family: Georgia, 'Times New Roman', Times, serif;
+            color: #f00b;
+            font-size: 27px;
+            padding: 5px 15px;
+            border:none;
+            background: #000;
+            visibility: hidden;
+
+            position: relative;
+            top: -50px;
+        }
+
+        #box{
+            width: 100px;
+            height: 50px;
+            border-radius: 25%;
+            background-color: rgba(100, 50, 50, 0.8);
+            position: absolute;
+            top:0px;
+            left:0px;
+        }
+    }
+
+
