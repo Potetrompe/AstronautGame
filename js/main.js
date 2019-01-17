@@ -1,3 +1,5 @@
+//* TODO: instead of credits-, hearts- and score-overlay. Unify to a single HUD-overlay
+
 //* Canvas setup
 var canvasGfx = document.getElementById("canvasGfx");
 var ctx = canvasGfx.getContext("2d");
@@ -21,11 +23,19 @@ var astronautDim = Math.floor((140 / 180) * 100) / 100; //| width/height
 var scaleMax = 4;
 var starfieldSpeed = 2;
 var gameOverScreenAnimationCounter = 0;
+var shopScreen = false;
 var gameScore = 0;
 var oldGameScore = 0;
+var newScore = 0;
+var gameCredits = 0;
 var speed = 1;
 var gameOver = false;
 var restartBtnActive = false;
+var pSpeed = 1;
+
+var hearts = 3;
+var heartString = "";
+var heartSymbol = "♥";
 
 var gameOverScreen;
 var asteroid;
@@ -46,8 +56,6 @@ imageStarfield.src = "./media/starfield.jpg";
 function rand(x){
     return Math.floor((Math.random() * x)+1);
 }
-
-
 
 function Asteroid(x, y){
     this.x = x,
@@ -77,6 +85,62 @@ function Asteroid(x, y){
     this.draw = function(){
         ctx.drawImage(imageAsteroid, this.x, this.y, this.w, this.h);
     };
+}
+
+function drawGameCredits(){
+    ctx.fillStyle = "#fff";
+    ctx.font = "20px Georgia";
+    ctx.textAlign = "start";
+    ctx.fillText("Credits: " + gameCredits, 1/32 * canvW, 1/8 * canvH);
+}
+
+function drawHearts(){
+    heartString = "";
+    for (var i = 0; i < hearts; i++) {
+        heartString = heartString + " " + heartSymbol;
+    }
+    ctx.fillStyle = "#F00";
+    ctx.font = "40px georgia";
+    ctx.textAlign = "start";
+    ctx.fillText(heartString, 1/4 * canvW, 1/8 * canvH + 10);
+}
+
+function shopScreenDraw(credits){
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvW, canvH);
+    ctx.font = "20px Georgia";
+    ctx.textAlign = "start";
+    ctx.fillStyle = "#ddd";
+    if(credits >= 50){
+        ctx.fillText("( 1 ) - Refill Hearts", 1/8 * canvW, 3/8 * canvH);
+    }
+    if(credits >= 100){
+        ctx.fillText("( 2 ) - Faster movement, Speed: " + pSpeed, 1/8 * canvW, 4/8 * canvH); //| add current speed
+    }
+    if(credits >= 150){
+        ctx.fillText("( 3 ) - Slower asteroides / ugrade max hearts", 1/8 * canvW, 5/8 * canvH);
+    }    
+}
+
+function buyOpt1(){
+    //| refill hearts
+    if(gameCredits >= 50){
+        shopScreen = false;
+    }
+}
+function buyOpt2(){
+    //| up movement
+    if(gameCredits >= 100){
+        gameCredits -= 50;
+        pSpeed++;
+        shopScreen = false;
+    }
+}
+function buyOpt3(){
+    //| Upgrade max hearts
+    if(gameCredits >= 150){
+        shopScreen = false;
+    }
 }
 
 function init(){
@@ -143,10 +207,13 @@ function init(){
     //asteroid.scale();                             //| change size to w*scale (with scale func) // will always be scale 1 with first asteroide
     
     restart.onclick = function (){
+        shopScreen = false;
         gameOver = false; 
         gameOverScreenAnimationCounter = 0; 
         speed = 1;
         gameScore = 0;
+        newScore = 0;
+        gameCredits = 0;
         asteroid.x = -1000;
         asteroid.update();
         animate();
@@ -164,7 +231,6 @@ function animate(){
     if(gameOverScreenAnimationCounter > 50){
         restartBtnActive = true;
         btnRestart.style.visibility = "visible";
-
         return;
     }
     if(
@@ -178,6 +244,10 @@ function animate(){
         gameOverScreen.draw();
         gameOverScreenAnimationCounter++;
         //console.log(gameOverScreenAnimationCounter);
+    }else if(shopScreen){
+        shopScreenDraw(gameCredits);
+        drawGameCredits();
+        //console.log(gameCredits + ", " + shopScreen);
     }else if(!gameOver){
         //| Clear b4 painting a new frame
         ctx.clearRect(0, 0, canvW, canvH);
@@ -186,7 +256,15 @@ function animate(){
         starfield.update();
         asteroid.update();
         astronaut.draw();
+        drawGameCredits();
+        drawHearts();
+    
+        if(gameScore-newScore >= 10){
+            newScore = gameScore;
+            gameCredits++;
+        }
         gameScore++;
+
         if(gameScore > oldGameScore + 250){
             //console.log(gameScore + ", " + oldGameScore + ", " + speed);
             oldGameScore = gameScore;
@@ -194,7 +272,6 @@ function animate(){
         }
         //ctx.fillRect(0, canvH/2, 1000, 1); //| test line, find center
     }
-
 
     //| Gameloop func
     requestAnimationFrame(animate);
@@ -220,16 +297,31 @@ function keyEventDownHandler(event){
     //console.log(event.keyCode);
     
     if (event.keyCode == 38 && onoffUP) {    //| Event for KeyUp
-        keyIntervalUP = setInterval(intervalUp, 10);
+        keyIntervalUP = setInterval(intervalUp, 16 - 2 * pSpeed);
         onoffUP = !(onoffUP);
         //console.log(event.keyCode + " up" + ", onoffUP: " + onoffUP);
         
     } else if (event.keyCode == 40 && onoffDOWN) {  //| Event for KeyDown
-        keyIntervalDOWN = setInterval(intervalDown, 10);
+        keyIntervalDOWN = setInterval(intervalDown, 16 - 2 * pSpeed);
         onoffDOWN = !(onoffDOWN);
         //console.log(event.keyCode + " down" + ", onoffDOWN: " + onoffDOWN); 
     }
-    if(event.keyCode == 32 && restartBtnActive){
+    if(!(gameOver)){
+        //| open shop
+        if(event.keyCode == 32){
+            shopScreen = !(shopScreen);
+        }
+        //| Buy 1, 2 or 3
+        if(event.keyCode == 49){
+            buyOpt1();
+        }else if(event.keyCode == 50){
+            buyOpt2();
+        }else if(event.keyCode == 51){
+            buyOpt3();
+        }
+    }
+
+    if(event.keyCode == 13 && restartBtnActive){
         //console.log("space");
         restart.onclick();
     }
@@ -245,10 +337,9 @@ function keyEventReleaseHandler(event){
         clearInterval(keyIntervalDOWN);
         onoffDOWN = !(onoffDOWN);
         //console.log("release down" + ", onoffDOWN: " + onoffDOWN);
-
     }
 }
-
+/*
 //| mouseEvents
 window.addEventListener("mousemove", moveBoxEl);
 
@@ -260,7 +351,7 @@ function moveBoxEl(e){
     boxEl.style.left = x;
     boxEl.innerHTML = y + " - " + x;
 }
-
+*/
 window.onload = function(){
     init();
     animate();
