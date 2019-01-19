@@ -1,7 +1,7 @@
 # AstronautGame
 Simple JS game
 
-![](screenshots/screenshot1.PNG)
+![](screenshots/screenshot2.PNG)
 
 Userinput:
 - Up arrow
