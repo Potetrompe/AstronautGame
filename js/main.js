@@ -23,6 +23,9 @@ var astronautDim = Math.floor((140 / 180) * 100) / 100; //| width/height
 var scaleMax = 4;
 var starfieldSpeed = 2;
 var gameOverScreenAnimationCounter = 0;
+var invulnerable = false;
+var invulnerableCounter = 0;
+var invulnerableTime = 60;  //| ex. easy mode can have longer invulnerbility
 var shopScreen = false;
 var gameScore = 0;
 var oldGameScore = 0;
@@ -34,6 +37,7 @@ var restartBtnActive = false;
 var pSpeed = 1;
 
 var hearts = 3;
+var maxHearts = 3;
 var heartString = "";
 var heartSymbol = "♥";
 
@@ -105,14 +109,23 @@ function drawHearts(){
     ctx.fillText(heartString, 1/4 * canvW, 1/8 * canvH + 10);
 }
 
+function hitAnimation(){
+    ctx.fillStyle = "#f004";
+    ctx.fillRect(0, 0, canvW, canvH);
+}
+
 function shopScreenDraw(credits){
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvW, canvH);
     ctx.font = "20px Georgia";
     ctx.textAlign = "start";
     ctx.fillStyle = "#ddd";
+
+    if(credits < 50){
+        ctx.fillText("You need more credits!", 1/8 * canvW, 3/8 * canvH);
+    }
     if(credits >= 50){
-        ctx.fillText("( 1 ) - Refill Hearts", 1/8 * canvW, 3/8 * canvH);
+        ctx.fillText("( 1 ) - Refill " + (maxHearts - hearts) + " Hearts", 1/8 * canvW, 3/8 * canvH);
     }
     if(credits >= 100){
         ctx.fillText("( 2 ) - Faster movement, Speed: " + pSpeed, 1/8 * canvW, 4/8 * canvH); //| add current speed
@@ -125,20 +138,25 @@ function shopScreenDraw(credits){
 function buyOpt1(){
     //| refill hearts
     if(gameCredits >= 50){
+        hearts = maxHearts;
+        gameCredits -= 50;
         shopScreen = false;
     }
 }
 function buyOpt2(){
     //| up movement
     if(gameCredits >= 100){
-        gameCredits -= 50;
         pSpeed++;
+        gameCredits -= 100;
         shopScreen = false;
     }
 }
 function buyOpt3(){
     //| Upgrade max hearts
     if(gameCredits >= 150){
+        maxHearts++;
+        hearts = maxHearts;
+        gameCredits -= 150;
         shopScreen = false;
     }
 }
@@ -210,6 +228,10 @@ function init(){
         shopScreen = false;
         gameOver = false; 
         gameOverScreenAnimationCounter = 0; 
+        hearts = 3;
+        maxHearts = hearts;
+        invulnerable = false;
+        invulnerableCounter = 0;
         speed = 1;
         gameScore = 0;
         newScore = 0;
@@ -225,10 +247,9 @@ function init(){
 }
 
 function animate(){
-    
-    //console.log("tick");
-    //| check hitbox betwen ateroid and asteronaut
-    if(gameOverScreenAnimationCounter > 50){
+
+    if(gameOverScreenAnimationCounter > 70){ //* 70-ish frames b4 background turns compleatly black
+
         restartBtnActive = true;
         btnRestart.style.visibility = "visible";
         return;
@@ -236,19 +257,32 @@ function animate(){
     if(
         asteroid.x <= astronaut.x + astronaut.w &&
         asteroid.y + asteroid.h >= astronaut.y &&
-        asteroid.y <= astronaut.y + astronaut.h 
-        ){ //| if astroide is past astronaut
-        //*print game over
-        //console.log("game over");
+        asteroid.y <= astronaut.y + astronaut.h &&
+        hearts == 0
+        ){ //| if hit && no hearts
+
         gameOver = true;
         gameOverScreen.draw();
         gameOverScreenAnimationCounter++;
-        //console.log(gameOverScreenAnimationCounter);
+
+    }else if(
+        asteroid.x <= astronaut.x + astronaut.w &&
+        asteroid.y + asteroid.h >= astronaut.y &&
+        asteroid.y <= astronaut.y + astronaut.h &&
+        hearts >= 1 && invulnerable == false
+        ){ //| if hit && has more hearts left
+
+        hearts--;
+        invulnerable = true; //| onoff switch
+        
     }else if(shopScreen){
+
         shopScreenDraw(gameCredits);
         drawGameCredits();
-        //console.log(gameCredits + ", " + shopScreen);
+        drawHearts();
+
     }else if(!gameOver){
+
         //| Clear b4 painting a new frame
         ctx.clearRect(0, 0, canvW, canvH);
         
@@ -258,10 +292,18 @@ function animate(){
         astronaut.draw();
         drawGameCredits();
         drawHearts();
+
+        if(invulnerable && invulnerableCounter < invulnerableTime){
+            hitAnimation();
+            invulnerableCounter++;
+        }else if(invulnerable && invulnerableCounter >= invulnerableTime){
+            invulnerableCounter = 0;
+            invulnerable = false;
+        }
     
         if(gameScore-newScore >= 10){
             newScore = gameScore;
-            gameCredits++;
+            gameCredits = gameCredits + 1; //* how many credits per 10th frame
         }
         gameScore++;
 
@@ -297,12 +339,12 @@ function keyEventDownHandler(event){
     //console.log(event.keyCode);
     
     if (event.keyCode == 38 && onoffUP) {    //| Event for KeyUp
-        keyIntervalUP = setInterval(intervalUp, 16 - 2 * pSpeed);
+        keyIntervalUP = setInterval(intervalUp, 16 - 4 * pSpeed);
         onoffUP = !(onoffUP);
         //console.log(event.keyCode + " up" + ", onoffUP: " + onoffUP);
         
     } else if (event.keyCode == 40 && onoffDOWN) {  //| Event for KeyDown
-        keyIntervalDOWN = setInterval(intervalDown, 16 - 2 * pSpeed);
+        keyIntervalDOWN = setInterval(intervalDown, 16 - 4 * pSpeed);
         onoffDOWN = !(onoffDOWN);
         //console.log(event.keyCode + " down" + ", onoffDOWN: " + onoffDOWN); 
     }
